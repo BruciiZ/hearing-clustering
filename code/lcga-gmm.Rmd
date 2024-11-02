@@ -18,41 +18,53 @@ library(haven)
 rm(list=ls())
 setwd('/Users/bruce/Desktop/Prof. Wang lab/hearing-clustering')
 
-df <- read_xpt("data/P_AUX.XPT")
-var_list <- c('SEQN',
-              'AUXU500L', 'AUXU1K1L', 'AUXU2KL', 'AUXU3KL', 'AUXU4KL', 'AUXU6KL', 'AUXU8KL')
+df <- read_csv('data/nhanes_1520_age.csv')
+left_var_list <- c('SEQN', 'AUXU500L', 'AUXU1K1L', 'AUXU2KL', 'AUXU3KL', 'AUXU4KL', 'AUXU6KL', 'AUXU8KL')
+right_var_list <- c('SEQN', 'AUXU500R', 'AUXU1K1R', 'AUXU2KR', 'AUXU3KR', 'AUXU4KR', 'AUXU6KR', 'AUXU8KR')
+
+df_left <- df %>%
+  select(all_of(left_var_list))
+colnames(df_left) <- c('SEQN', '500 Hz', '1 kHz', '2 kHz', '3 kHz', '4 kHz', '6 kHz', '8 kHz')
+df_right <- df %>%
+  select(all_of(right_var_list))
+colnames(df_right) <- c('SEQN', '500 Hz', '1 kHz', '2 kHz', '3 kHz', '4 kHz', '6 kHz', '8 kHz')
+
+df_left$SEQN <- seq_along(df_left$SEQN)
+df_right$SEQN <- seq_along(df_right$SEQN) + 9729
+
+df <- bind_rows(df_left, df_right)
+
 df <- df %>%
-  select(all_of(var_list)) %>%
-  pivot_longer(cols = all_of(var_list[-1]), names_to = "Frequency", values_to = "Threshold") %>%
-  filter(Threshold != 888 & Threshold != 666 & !is.na(Threshold))
+  pivot_longer(cols = colnames(df_left)[-1], names_to = "frequency", values_to = "threshold") %>%
+  filter(threshold != 888 & threshold != 666 & !is.na(threshold))
 
 df <- df %>%
   arrange(SEQN) %>%
   group_by(SEQN) %>%
-  mutate(Frequency = row_number()) %>%
+  mutate(frequency = row_number()) %>%
   ungroup()
 ```
 
-## Growth Mixture Model
+## LCGA
 
-```{r GMM analysis}
+```{r LCGA analysis}
+# open package library(lcmm)
+# set the seed for random number generator, so results can be # reproduced:
 set.seed(2002)
-gmm1_2 <- hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 1, data = df)
 
-gmm2_2 <- gridsearch(rep = 10, maxiter = 10, minit = gmm1_2, hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 2, data = df, mixture = ~ Frequency, nwg=T))
+# run models with 1-4 classes, each with 100 random starts
+# using the 1-class model to set initial start values:
 
-gmm3_2 <- gridsearch(rep = 10, maxiter = 10, minit = gmm1_2, hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 3, data = df, mixture = ~ Frequency, nwg=T))
+lcga1 <- hlme(threshold ~ frequency, subject = "SEQN", ng = 1, data = df)
 
-gmm4_2 <- gridsearch(rep = 10, maxiter = 10, minit = gmm1_2, hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 4, data = df, mixture = ~ Frequency, nwg=T))
+lcga2 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1, m=hlme(threshold ~ frequency + I(frequency^2), subject = "SEQN", ng = 2, data = df, mixture = ~ frequency))
 
-gmm5_2 <- gridsearch(rep = 10, maxiter = 10, minit = gmm1_2, hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 5, data = df, mixture = ~ Frequency, nwg=T))
+lcga3 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1, m=hlme(threshold ~ frequency, subject = "SEQN", ng = 3, data = df, mixture = ~ frequency))
 
-gmm6_2 <- gridsearch(rep = 10, maxiter = 10, minit = gmm1_2, hlme(Threshold ~ Frequency, subject = "SEQN", random= ~ 1 + Frequency, ng = 6, data = df, mixture = ~ Frequency, nwg=T))
-# make table with results for the 4 models: summarytable(gmm1_2, gmm2_2, gmm3_2)
-```
+lcga4 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1, m=hlme(threshold ~ frequency, subject = "SEQN", ng = 4, data = df, mixture = ~ frequency))
 
-```{r summaryTable}
-summarytable(gmm3_2, gmm4_2,gmm5_2,gmm6_2)
+# make table with results for the 3 models: summarytable(lcga1, lcga2, lcga3)
+summarytable(lcga1, lcga2, lcga3, lcga4)
 ```
 
 
