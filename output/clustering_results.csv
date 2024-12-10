@@ -1,0 +1,22 @@
+Method,Number of Clusters,Silhouette Score,Davies-Bouldin Score,Calinski-Harabasz Score
+z-score,2,0.405,0.934,3775.086
+z-score,3,0.31,1.175,2911.064
+z-score,4,0.25,1.327,2448.683
+min-max scaling,2,0.409,0.927,3873.862
+min-max scaling,3,0.301,1.134,3073.118
+min-max scaling,4,0.238,1.321,2527.021
+robust scaling,2,0.391,0.96,3510.498
+robust scaling,3,0.309,1.239,2664.354
+robust scaling,4,0.242,1.373,2369.904
+quantile transformation,2,0.393,0.952,3644.071
+quantile transformation,3,0.276,1.165,2845.501
+quantile transformation,4,0.201,1.399,2190.328
+PCA,2,0.41,0.926,3878.108
+PCA,3,0.303,1.143,3083.744
+PCA,4,0.234,1.338,2527.803
+Kernel PCA,2,0.364,0.894,1780.914
+Kernel PCA,3,0.362,0.721,1021.948
+Kernel PCA,4,0.321,1.0,976.618
+t-SNE,2,0.399,0.936,3745.868
+t-SNE,3,0.263,1.194,2741.654
+t-SNE,4,0.207,1.437,2243.125
